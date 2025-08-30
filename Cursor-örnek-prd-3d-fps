@@ -1,0 +1,326 @@
+# 3D First Person Shooter - Unity C# PRD
+
+## 1. Teknik Spesifikasyonlar
+- **Engine**: Unity 2022.3 LTS+
+- **Platform**: Windows/macOS/Linux Desktop
+- **Input**: WASD + Mouse (First Person)
+- **Language**: C#
+- **Target FPS**: 60+
+
+## 2. Kontrol Sistemi
+
+### 2.1 Input Mapping
+- **WASD**: Karakter hareketi (CharacterController)
+- **Mouse X**: Yatay kamera rotasyonu
+- **Mouse Y**: Dikey kamera rotasyonu (clamped)
+- **Left Click**: Ateş etme (Pistol: single shot, Rifle: hold to fire)
+- **Mouse Wheel**: Silah değiştirme
+- **ESC**: Pause menü
+
+### 2.2 Kamera Sistemi
+- **Type**: First Person Camera
+- **Sensitivity**: Configurable
+- **Clamp**: -90° to +90° (vertical)
+- **Smooth**: Mouse smoothing enabled
+- **Crosshair**: Center screen, always visible
+
+## 3. Unity Bileşenleri
+
+### 3.1 Core Scripts
+```csharp
+// PlayerController.cs - Ana karakter kontrolü
+// WeaponSystem.cs - Silah yönetimi
+// EnemyAI.cs - Düşman AI
+// GameManager.cs - Oyun durumu
+// RoundManager.cs - Round sistemi
+// UIManager.cs - HUD yönetimi
+// DamageFeedback.cs - Hasar görsel feedback
+```
+
+### 3.2 Physics & Collision
+- **Player**: CharacterController component
+- **Enemies**: Rigidbody + Collider
+- **Bullets**: Raycast-based shooting with collision detection
+- **NavMesh**: Düşman pathfinding
+- **Obstacles**: Static colliders (buildings, objects)
+
+## 4. Oyun Mekanikleri (Unity Optimized)
+
+### 4.1 Round Sistemi
+- **Duration**: 60 seconds (Time.time)
+- **Enemy Count**: 5 + (round-1)*5
+- **Max Rounds**: 100 rounds
+- **Spawn**: Random valid positions (100m x 100m map)
+- **Reset**: Player HP to 100
+
+### 4.2 Combat System
+- **Weapon Types**: 
+  - Pistol (single shot, click to fire)
+  - Rifle (automatic, hold to fire)
+- **Fire Rate**: Rifle > Pistol (Counter-Strike standard)
+- **Range**: Infinite (until collision with obstacles)
+- **Accuracy**: Center crosshair, 100% accuracy
+- **Recoil**: Pistol (none), Rifle (minimal)
+- **Ammo**: Unlimited (no ammo display needed)
+- **Damage**: Raycast hit detection
+- **Bullet Behavior**: Stops on collision, no penetration
+
+### 4.3 Enemy Types (ScriptableObject)
+```csharp
+[CreateAssetMenu(fileName = "EnemyData", menuName = "Game/Enemy Data")]
+public class EnemyData : ScriptableObject
+{
+    public float health;
+    public float speed;
+    public int scoreValue;
+    public float damagePerSecond;
+    public float attackRange;
+    public float attackCooldown;
+    public EnemyType type;
+}
+```
+
+## 5. AI Sistemi
+
+### 5.1 NavMesh Implementation
+- **Surungen**: NavMeshAgent (slow speed, direct path)
+- **Humanoid**: NavMeshAgent + shooting AI
+- **Deniz Anası**: Transform-based flying + acid projectile AI
+
+### 5.2 Behavior States
+```csharp
+public enum EnemyState
+{
+    Patrol,
+    Chase,
+    Attack,
+    Flee
+}
+```
+
+### 5.3 Enemy AI Logic
+- **Spawn**: Random positions in 100m x 100m map
+- **Spawn Logic**: Avoid rigidbody objects and buildings
+- **Attack Range**: Same as player (infinite until collision)
+- **Attack Cooldown**: Logical intervals (to be balanced)
+- **Dodge Behavior**: Evade incoming bullets when detected
+- **Aggression**: Always seek to kill player, no hiding
+- **Random Distribution**: Equal chance for all enemy types
+
+## 6. Performans Optimizasyonu
+
+### 6.1 Object Pooling
+- **Bullets**: Pooled projectiles
+- **Acid Projectiles**: Pooled acid balls
+- **Enemies**: Pooled spawn system
+- **Effects**: Pooled particle systems
+
+### 6.2 LOD System
+- **Enemy Models**: Distance-based LOD
+- **Particle Effects**: Performance-based culling
+
+### 6.3 Memory Management
+- **Unity Best Practices**: Standard FPS game optimization
+- **Particle Limits**: Unity default limits
+- **Max Enemies**: 500+ (round 100: 5 + 99*5 = 500 enemies)
+
+## 7. UI System (Unity UI)
+
+### 7.1 Canvas Structure
+```
+Canvas (Screen Space - Overlay)
+├── HUD Panel
+│   ├── Health Bar (Slider)
+│   ├── Score Text (TextMeshPro)
+│   ├── Timer Text (TextMeshPro)
+│   ├── Round Text (TextMeshPro)
+│   └── Crosshair (Image - center screen)
+├── Damage Feedback (Red overlay - 0.5s duration)
+├── Pause Menu
+└── Game Over Menu
+    ├── Final Score
+    ├── Round Reached
+    ├── Enemy Kill Count (by type)
+    └── Restart Button
+```
+
+### 7.2 UI Scripts
+```csharp
+// HealthBar.cs - HP göstergesi
+// ScoreDisplay.cs - Puan sistemi
+// TimerUI.cs - Süre göstergesi
+// MenuManager.cs - Menü yönetimi
+// DamageFeedback.cs - Kırmızı overlay sistemi
+// GameOverUI.cs - Oyun sonu ekranı
+```
+
+### 7.3 Damage Feedback System
+- **Visual**: Transparent red overlay
+- **Duration**: 0.5 seconds
+- **Effect**: Screen reddening without blocking view
+- **Trigger**: Player takes damage
+
+## 8. Ses Sistemi (Unity Audio)
+
+### 8.1 Audio Sources
+- **Player**: Footsteps, weapon sounds
+- **Enemies**: Movement, attack sounds
+- **Environment**: Background music
+- **UI**: Menu sounds
+
+### 8.2 Audio Mixer
+- **Master**: Overall volume
+- **SFX**: Sound effects
+- **Music**: Background music
+- **UI**: Interface sounds
+
+## 9. Proje Yapısı
+
+```
+Assets/
+├── Scripts/
+│   ├── Player/
+│   ├── Enemy/
+│   ├── Weapons/
+│   ├── Managers/
+│   └── UI/
+├── Prefabs/
+│   ├── Player/
+│   ├── Enemies/
+│   ├── Weapons/
+│   └── UI/
+├── Materials/
+├── Models/
+├── Audio/
+└── Scenes/
+```
+
+## 10. Geliştirme Fazları
+
+### Faz 1: Core Setup (1-2 hafta)
+- Unity project setup
+- Player movement + camera
+- Basic weapon system
+- Simple enemy AI
+
+### Faz 2: Game Systems (2-3 hafta)
+- Round management
+- Enemy spawning
+- Health/damage system
+- Basic UI
+
+### Faz 3: Polish (1-2 hafta)
+- Sound effects
+- Visual effects
+- Performance optimization
+- Bug fixes
+
+## 11. Teknik Gereksinimler
+
+### 11.1 Unity Packages
+- **Input System**: New Input System
+- **AI Navigation**: NavMesh Components
+- **UI Toolkit**: Modern UI system
+- **TextMeshPro**: Advanced text rendering
+
+### 11.2 Performance Targets
+- **Min Spec**: Intel i3, 4GB RAM, GTX 750
+- **Target Spec**: Intel i5, 8GB RAM, GTX 1060
+- **FPS**: 60+ on target spec
+
+## 12. Test Stratejisi
+- **Unit Tests**: Core game logic
+- **Play Mode Tests**: Gameplay scenarios
+- **Performance Tests**: FPS monitoring
+- **Input Tests**: Control responsiveness
+
+## 13. Oyun Genel Bakış
+- **Tür**: 3D First Person Shooter
+- **Platform**: Unity (PC)
+- **Hedef**: Counter-Strike benzeri arena shooter
+- **Oynanış**: Round-based, time-limited combat
+
+## 14. Temel Mekanikler
+
+### 14.1 Round Sistemi
+- **Süre**: 60 saniye/round
+- **Düşman Artışı**: Her round +5 düşman
+- **Başlangıç**: Round 1'de 5 düşman
+- **Maksimum**: 100 round (500 düşman)
+- **Can Yenileme**: Her round başında 100 HP
+
+### 14.2 Puan Sistemi
+- **Surungen**: 1 puan (1 vuruş)
+- **Humanoid**: 2 puan (2 vuruş)  
+- **Uçan Deniz Anası**: 3 puan (3 vuruş)
+
+### 14.3 Can Sistemi
+- **Başlangıç HP**: 100
+- **Surungen Hasarı**: 25 HP/saniye (temas)
+- **Mermi Hasarı**: 15 HP (humanoid)
+- **Asit Topu Hasarı**: 15 HP (deniz anası)
+- **Ölüm**: HP ≤ 0
+
+## 15. Düşman Tipleri
+
+### 15.1 Surungen
+- **Hareket**: Yerde yavaş yürüme
+- **AI**: Oyuncuya doğru yönelme
+- **Hasar**: Temas bazlı (25 HP/saniye)
+- **HP**: 1
+- **Puan**: 1
+- **Spawn**: Random ground positions
+
+### 15.2 Humanoid
+- **Hareket**: Yerde hızlı yürüme
+- **AI**: Mermi atma + kaçma
+- **Hasar**: Mermi bazlı (15 HP)
+- **HP**: 2
+- **Puan**: 2
+- **Attack Range**: Infinite (until collision)
+- **Spawn**: Random ground positions
+
+### 15.3 Uçan Deniz Anası
+- **Hareket**: Havada uçma
+- **AI**: Asit topu atma + kaçma
+- **Hasar**: Asit topu bazlı (15 HP)
+- **HP**: 3
+- **Puan**: 3
+- **Saldırı**: Hafif eğimli asit topu (projectile)
+- **Spawn**: Random air positions
+
+## 16. Harita Tasarımı
+
+### 16.1 Harita Özellikleri
+- **Boyut**: 100m x 100m
+- **Referans**: Counter-Strike de_dust2/assault
+- **Cover**: Buildings and obstacles (no specific cover points)
+- **Verticality**: Low (only for flying enemies)
+- **Obstacles**: Static objects that block bullets and movement
+
+### 16.2 Spawn Sistemi
+- **Düşman Spawn**: Random positions in open areas
+- **Spawn Logic**: Avoid buildings and rigidbody objects
+- **Oyuncu Spawn**: Fixed safe zone
+- **Spawn Distribution**: Equal chance for all enemy types
+
+## 17. Oyun Akışı
+
+### 17.1 Win/Lose Conditions
+- **Win**: Complete 100 rounds
+- **Lose**: HP reaches 0
+- **Game Over Screen**: Shows final score, round reached, kill count by enemy type
+- **Restart**: Button to start over
+
+### 17.2 Progression
+- **Round 1**: 5 enemies
+- **Round 100**: 500 enemies
+- **Difficulty**: Increases with enemy count
+- **Objective**: Survive as long as possible, maximize score
+
+## 18. Başarı Kriterleri
+- **Oynanabilirlik**: Smooth 60 FPS with 500 enemies
+- **Balance**: Each enemy type provides equal challenge
+- **Progression**: Increasing difficulty maintains engagement
+- **Engagement**: 100 rounds of playability
+- **Performance**: Unity best practices for FPS games
